@@ -1,0 +1,24 @@
+Orginal JoyDivision :
+
+Qty Value    Device            Package   Parts   Description
+1            M09D              M09D      X2      SUB-D
+1   1.5k     R-EU_M0805        M0805     R3      RESISTOR, European symbol
+1   12M      XTAL/S            QS        Q1      CRYSTAL
+2   27p      C-EUC0805         C0805     C1, C2  CAPACITOR, European symbol
+2   3.6V     ZENER-DIODESOD80C SOD80C    D1, D2  Z-Diode
+2   68       R-EU_M0805        M0805     R1, R2  RESISTOR, European symbol
+1   MEGA8-AI MEGA8-AI          TQFP32-08 IC1     MICROCONTROLLER AVR ATMEGA8-8AU
+1   USB-A-H  USB-A-H           USB-A-H   JP1     USB Connectors
+
+
+Dual JoyDivision :
+
+Qty Value    Device            Package   Parts   Description
+1            DB25D             M25D      X1      Various DB25 connectors                                        
+1            M04PTH            1X04      *       Solder Pads                                                       
+1   1.5k     R-EU_M0805        M0805     R3      RESISTOR, European symbol                                      
+1   12M      XTAL/S            QS        Q1      CRYSTAL                                                        
+2   27p      C-EUC0805         C0805     C1, C2  CAPACITOR, European symbol                                     
+2   3.6V     ZENER-DIODESOD80C SOD80C    D1, D2  Z-Diode                                                        
+2   68       R-EU_M0805        M0805     R1, R2  RESISTOR, European symbol                                      
+1   MEGA8-AI MEGA8-AI          TQFP32-08 IC1     MICROCONTROLLER 

@@ -1,0 +1,7 @@
+If you like to order an allready design PCB (using the EAGLE-files),
+I've prepared a link to OSH park which delivers quick and with good quality and great price :
+
+* JoyDivision - https://www.oshpark.com/shared_projects/wz2Vsnir
+* Dual JoyDivision - https://www.oshpark.com/shared_projects/gp5bRPie
+
+// Stefan Blixth - stefan@onyxsoft.se
