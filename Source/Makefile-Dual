@@ -19,6 +19,9 @@ CD32_OBJ = $(OBJECTS) cd32.o
 SEGA_OBJ = $(OBJECTS) sega.o
 NES_OBJ  = $(OBJECTS) nes.o
 SNES_OBJ = $(OBJECTS) snes.o
+MSX_OBJ  = $(OBJECTS) msx.o
+AMST_OBJ = $(OBJECTS) amstrad.o
+NINT_OBJ = $(OBJECTS) snesnes.o
 
 COMPILE = avr-gcc -Wall -Os -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
 
@@ -105,22 +108,28 @@ COMPILE = avr-gcc -Wall -Os -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
 # symbolic targets:
 help:
 	@echo "This Makefile has no default rule. Use one of the following:"
-	@echo "make joystick .. to build joystick.hex"
-	@echo "make cd32 ...... to build cd32.hex"
-	@echo "make sega ...... to build sega.hex"
-	@echo "make nes ....... to build nes.hex"
-	@echo "make snes ...... to build snes.hex"
-	@echo "make all ....... to build joystick.hex, cd32.hex, sega.hex, nes.hex & snes.hex"
-	@echo "=============================================================================="
-	@echo "make fuse ...... to flash the fuses"
-	@echo "make flashjoy .. to flash the Joystick firmware"
-	@echo "make flashcd32 . to flash the CD32 firmware"
-	@echo "make flashsega . to flash the Sega firmware"
-	@echo "make flashnes .. to flash the NES firmware"
-	@echo "make flashsnes . to flash the SNES firmware"
-	@echo "make clean ..... to delete objects and hex file"
+	@echo "make joystick ..... to build joystick.hex"
+	@echo "make cd32 ......... to build cd32.hex"
+	@echo "make sega ......... to build sega.hex"
+	@echo "make nes .......... to build nes.hex"
+	@echo "make snes ......... to build snes.hex"
+	@echo "make msx .......... to build msx.hex"
+	@echo "make amstrad ...... to build amstrad.hex"
+	@echo "make snesnes ...... to build snesnes.hex"
+	@echo "make all .......... to build joystick.hex, cd32.hex, sega.hex, nes.hex, snes.hex, msx.hex, amstrad.hex & snesnes.hex"
+	@echo "===================================================================================================================="
+	@echo "make fuse ......... to flash the fuses"
+	@echo "make flashjoy ..... to flash the Joystick firmware"
+	@echo "make flashcd32 .... to flash the CD32 firmware"
+	@echo "make flashsega .... to flash the Sega firmware"
+	@echo "make flashnes ..... to flash the NES firmware"
+	@echo "make flashsnes .... to flash the SNES firmware"
+	@echo "make flashmsx ..... to flash the MSX firmware"
+	@echo "make flashamstrad . to flash the Amstrad firmware"
+	@echo "make flashsnesnes . to flash the SNES+NES firmware"
+	@echo "make clean ........ to delete objects and hex file"
 
-all: joystick-dual.hex cd32-dual.hex sega-dual.hex nes-dual.hex snes-dual.hex
+all: joystick-dual.hex cd32-dual.hex sega-dual.hex nes-dual.hex snes-dual.hex msx-dual.hex amstrad-dual.hex snesnes-dual.hex
 
 joystick: joystick-dual.hex
 
@@ -130,7 +139,13 @@ sega: sega-dual.hex
 
 nes: nes-dual.hex
 
-nes: snes-dual.hex
+snes: snes-dual.hex
+
+msx: msx-dual.hex
+
+amstrad: amstrad-dual.hex
+
+snesnes: snesnes-dual.hex
 
 # rule for programming fuse bits:
 fuse:
@@ -153,6 +168,15 @@ flashnes: nes-dual.hex
 
 flashsnes: snes-dual.hex
 	$(AVRDUDE) -U flash:w:snes-dual.hex:i
+
+flashmsx: msx-dual.hex
+	$(AVRDUDE) -U flash:w:msx-dual.hex:i
+
+flashamstrad: amstrad-dual.hex
+	$(AVRDUDE) -U flash:w:amstrad-dual.hex:i
+
+flashsnesnes: snesnes-dual.hex
+	$(AVRDUDE) -U flash:w:snesnes-dual.hex:i
 
 # rule for deleting dependent files (those which can be built by Make):
 clean:
@@ -195,6 +219,16 @@ nes.elf: usbdrv $(NES_OBJ)
 snes.elf: usbdrv $(SNES_OBJ)
 	$(COMPILE) -o snes.elf $(SNES_OBJ)
 
+msx.elf: usbdrv $(MSX_OBJ)
+	$(COMPILE) -o msx.elf $(MSX_OBJ)
+
+amstrad.elf: usbdrv $(AMST_OBJ)
+	$(COMPILE) -o amstrad.elf $(AMST_OBJ)
+
+snesnes.elf: usbdrv $(NINT_OBJ)
+	$(COMPILE) -o snesnes.elf $(NINT_OBJ)
+
+
 joystick-dual.hex: joystick.elf
 	rm -f joystick-dual.hex joystick.eep.hex
 	avr-objcopy -j .text -j .data -O ihex joystick.elf joystick-dual.hex
@@ -220,9 +254,27 @@ snes-dual.hex: snes.elf
 	avr-objcopy -j .text -j .data -O ihex snes.elf snes-dual.hex
 	avr-size snes-dual.hex
 
+msx-dual.hex: msx.elf
+	rm -f msx-dual.hex msx.eep.hex
+	avr-objcopy -j .text -j .data -O ihex msx.elf msx-dual.hex
+	avr-size msx-dual.hex
+
+amstrad-dual.hex: amstrad.elf
+	rm -f amstrad-dual.hex amstrad.eep.hex
+	avr-objcopy -j .text -j .data -O ihex amstrad.elf amstrad-dual.hex
+	avr-size amstrad-dual.hex
+
+snesnes-dual.hex: snesnes.elf
+	rm -f snesnes-dual.hex snesnes.eep.hex
+	avr-objcopy -j .text -j .data -O ihex snesnes.elf snesnes-dual.hex
+	avr-size snesnes-dual.hex
+
 cpp:
 	$(COMPILE) -E joystick.c
 	$(COMPILE) -E cd32.c
 	$(COMPILE) -E sega.c
 	$(COMPILE) -E nes.c
 	$(COMPILE) -E snes.c
+	$(COMPILE) -E msx.c
+	$(COMPILE) -E amstrad.c
+	$(COMPILE) -E snesnes.c

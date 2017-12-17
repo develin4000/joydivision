@@ -3,9 +3,9 @@
 ->= JoyDivision - USB joystick adapter - (c) Copyright 2016-2017 OnyxSoft        =<-
 ->================================================================================<-
 ->= Version  : 0.3                                                               =<-
-->= File     : joystick.c                                                        =<-
+->= File     : snesnes.c                                                         =<-
 ->= Author   : Stefan Blixth (stefan@onyxsoft.se)                                =<-
-->= Compiled : 2017-12-17                                                        =<-
+->= Compiled : 2017-11-17                                                        =<-
 ->================================================================================<-
 ->=                                                                              =<-
 ->= This file is part of JoyDivision - USB joystick adapter                      =<-
@@ -120,12 +120,11 @@ PROGMEM const char usbDescriptorConfiguration[] = {
 
 #endif
 
-
 const char usbHidReportDescriptor[] PROGMEM =
 {
     // Joystick
     0x05, 0x01,                    // USAGE_PAGE (Generic Desktop)
-    0x09, 0x04,                    // USAGE (Joystick)
+    0x09, 0x05,                    // USAGE (Game Pad)
     0xa1, 0x01,                    // COLLECTION (Application)
     0x09, 0x04,                    //   USAGE (Pointer)
     0xa1, 0x00,                    //   COLLECTION (Physical)
@@ -133,14 +132,14 @@ const char usbHidReportDescriptor[] PROGMEM =
     // Buttons
     0x05, 0x09,                    //     USAGE_PAGE (Button)
     0x19, 0x01,                    //     USAGE_MINIMUM (Button 1)
-    0x29, 0x03,                    //     USAGE_MAXIMUM (Button 3)
+    0x29, 0x08,                    //     USAGE_MAXIMUM (Button 8)
     0x15, 0x00,                    //     LOGICAL_MINIMUM (0)
     0x25, 0x01,                    //     LOGICAL_MAXIMUM (1)
-    0x95, 0x03,                    //     REPORT_COUNT (3)
+    0x95, 0x08,                    //     REPORT_COUNT (8)
     0x75, 0x01,                    //     REPORT_SIZE (1)
     0x81, 0x02,                    //     INPUT (Data,Var,Abs)
-    0x95, 0x01,                    //     REPORT_COUNT (1)
-    0x75, 0x05,                    //     REPORT_SIZE (5)
+    0x95, 0x00,                    //     REPORT_COUNT (0)
+    0x75, 0x01,                    //     REPORT_SIZE (1)
     0x81, 0x03,                    //     INPUT (Constant,Var,Abs)
 
     // Axis
@@ -157,20 +156,18 @@ const char usbHidReportDescriptor[] PROGMEM =
     0xc0                           // END_COLLECTION
 };
 
-
 typedef struct
 {
    uchar buttons;
-   char axis_x;
-   char axis_y;
+   char  axis_x;
+   char  axis_y;
 }report_t;
-
 
 #ifdef DUAL_JOYDIVISION
 static report_t reportBuffer[2];
 static PROGMEM const char DeviceStr[] = "Dual JoyDivision #x";
 static PROGMEM const char VendorStr[] = "OnyxSoft";
-static const char Desc0Str[] = { 4, 3, 0x09, 0x04 };
+static const char Desc0Str[] = { 4, 3, 0x09, 0x05 };
 
 usbMsgLen_t usbFunctionDescriptor(struct usbRequest *rq)
 {
@@ -221,14 +218,13 @@ usbMsgLen_t usbFunctionDescriptor(struct usbRequest *rq)
 static report_t reportBuffer;
 #endif
 
-static uchar idleRate = 0;            // repeat rate for keyboards, never used for mice
-static uchar currState = 0;           // Keeps track on the current state
+static uchar idleRate = 0; // repeat rate for keyboards, never used for mice
 
 
 report_t buildReport(uchar joyport)
 {
    char axis_x=0, axis_y=0;
-   uchar b1=0, b2=0, b3=0, tmp;
+   uchar buttons=0, cntr;
    report_t activeBuffer;
    
 #ifdef DUAL_JOYDIVISION
@@ -236,54 +232,70 @@ report_t buildReport(uchar joyport)
 #else
    activeBuffer = reportBuffer;
 #endif
-   
+
    if (joyport == JOYPORT1)
-   {
-      currState = PINC;
-      tmp = currState^0xff;
+   {  
+      SETBIT(PORTC, PC2);   // Set LATCH high
+      _delay_us(12);
+      CLEARBIT(PORTC, PC2); // Set LATCH low
 
-      // Read the status of the axis...
-      if (tmp & (1<<PC2)) {axis_x = 0x7f;} // Right
-      if (tmp & (1<<PC3)) {axis_x = 0x81;} // Left
-      if (tmp & (1<<PC4)) {axis_y = 0x7f;} // Down
-      if (tmp & (1<<PC5)) {axis_y = 0x81;} // Up
+      for (cntr=0; cntr<8 ; cntr++)  // We need to shift through all buttons to check their state...
+      {
+         _delay_us(6);
+         CLEARBIT(PORTC, PC0); // Set CLK high
 
-      // Read the status of the buttons...
-      if (tmp & (1<<PC1)) {b1 = 1;} // Button 1
-      if (tmp & (1<<PC0)) {b3 = 1;} // Button 3
+         switch (cntr)
+         {
+            case 0 : if (!TESTBIT(PINC, PC3)) buttons |= 0x01; break; // A
+            case 1 : if (!TESTBIT(PINC, PC3)) buttons |= 0x02; break; // B
+            case 2 : if (!TESTBIT(PINC, PC3)) buttons |= 0x04; break; // Select
+            case 3 : if (!TESTBIT(PINC, PC3)) buttons |= 0x08; break; // Start
+            case 4 : if (!TESTBIT(PINC, PC3)) axis_y   = 0x81; break; // Up
+            case 5 : if (!TESTBIT(PINC, PC3)) axis_y   = 0x7f; break; // Down
+            case 6 : if (!TESTBIT(PINC, PC3)) axis_x   = 0x81; break; // Left
+            case 7 : if (!TESTBIT(PINC, PC3)) axis_x   = 0x7f; break; // Right
+         }
 
-      currState = PINB;
-      tmp = currState^0xff;
-
-      if (tmp & (1<<PB0)) {b2 = 1;} // Button 2
+         _delay_us(6);
+         SETBIT(PORTC, PC0); // Set CLK low
+      }
    }
    else // joyport == JOYPORT2
    {
-      currState = PIND;
-      tmp = currState^0xff;
+      SETBIT(PORTD, PD4);   // Set LATCH high
+      _delay_us(12);
+      CLEARBIT(PORTD, PD4); // Set LATCH low
 
-      // Read the status of the axis...
-      if (tmp & (1<<PD4)) {axis_x = 0x7f;} // Right
-      if (tmp & (1<<PD5)) {axis_x = 0x81;} // Left
-      if (tmp & (1<<PD6)) {axis_y = 0x7f;} // Down
-      if (tmp & (1<<PD7)) {axis_y = 0x81;} // Up
+      for (cntr=0; cntr<16 ; cntr++)  // We need to shift through all buttons to check their state...
+      {
+         _delay_us(6);
+         CLEARBIT(PORTD, PD3); // Set CLK high
 
-      // Read the status of the buttons...
-      if (tmp & (1<<PD3)) {b3 = 1;} // Button 3
+         switch (cntr)
+         {
+            case 0  : if (!TESTBIT(PIND, PD5)) buttons |= 0x01; break; // B
+            case 1  : if (!TESTBIT(PIND, PD5)) buttons |= 0x02; break; // Y
+            case 2  : if (!TESTBIT(PIND, PD5)) buttons |= 0x04; break; // Select
+            case 3  : if (!TESTBIT(PIND, PD5)) buttons |= 0x08; break; // Start
+            case 4  : if (!TESTBIT(PIND, PD5)) axis_y   = 0x81; break; // Up
+            case 5  : if (!TESTBIT(PIND, PD5)) axis_y   = 0x7f; break; // Down
+            case 6  : if (!TESTBIT(PIND, PD5)) axis_x   = 0x81; break; // Left
+            case 7  : if (!TESTBIT(PIND, PD5)) axis_x   = 0x7f; break; // Right
+            case 8  : if (!TESTBIT(PIND, PD5)) buttons |= 0x10; break; // A
+            case 9  : if (!TESTBIT(PIND, PD5)) buttons |= 0x20; break; // X
+            case 10 : if (!TESTBIT(PIND, PD5)) buttons |= 0x40; break; // L
+            case 11 : if (!TESTBIT(PIND, PD5)) buttons |= 0x80; break; // R
+            default : break; // 4 Last bits can be ignored...
+         }
 
-      currState = PINB;
-      tmp = currState^0xff;
-
-      if (tmp & (1<<PB2)) {b1 = 1;} // Button 1
-      if (tmp & (1<<PB4)) {b2 = 1;} // Button 2
-
+         _delay_us(6);
+         SETBIT(PORTD, PD3); // Set CLK low
+      }
    }
+
    activeBuffer.axis_x  = axis_x;
    activeBuffer.axis_y  = axis_y;
-   
-   if (b1) activeBuffer.buttons |= 0x01;
-   if (b2) activeBuffer.buttons |= 0x02;
-   if (b3) activeBuffer.buttons |= 0x04;
+   activeBuffer.buttons = buttons;
 
    return activeBuffer;
 }
@@ -314,7 +326,6 @@ uchar usbFunctionSetup(uchar data[8])
    return 0;
 }
 
-
 static void hardwareInit(void)
 {
    uchar i, j; // Test for USB Reset
@@ -324,16 +335,48 @@ static void hardwareInit(void)
               \ o o o o /
             6  ¯¯¯¯¯¯¯¯¯ 9
 
-   Pin   Joystick     AVR-Pin (Port 1)   AVR-Pin (Port 2)
-   1     Up           PC5                PD7
-   2     Down         PC4                PD6
-   3     Left         PC3                PD5
-   4     Right        PC2                PD4
-   5     n/c          PC0                PD3
-   6     Button1      PC1                PB2
-   7     +5V          PB1                PB3
-   8     GND          GND                GND
-   9     Button2      PB0                PB4  */
+   NES info borrowed from : https://www.reddit.com/r/avr/comments/2fcslw/reading_a_snesnes_controller/
+
+   The SNES starts the show by sending a high pulse down the Latch line, which makes the 4021 (8-bit shift register)
+   inside the controller grab and store the state of all buttons.
+
+   Then the SNES sends a series of sixteen low pulses down the CLK line, which makes the controller
+   shuffle bits (one for each CLK pulse) down the Data Out line according to which buttons were pressed when latched.
+   A low bit on the Data Out line means the button is pressed.
+
+   By using this shift register we can build a bitmask that representant the button used on the game pad.
+   The shift register is represented by following states if the incomming data :
+
+   1  - Button B
+   2  - Button Y
+   3  - Button Select
+   4  - Button Start
+   5  - Button Up
+   6  - Button Down
+   7  - Button Left
+   8  - Button Right
+   9  - Button A
+   10 - Button X
+   11 - Button L
+   12 - Button R
+   13 - Button N/A
+   14 - Button N/A
+   15 - Button N/A
+   16 - Button N/A
+   
+   This means that we need to "clock" the states for at least 8 "rounds" to be able to read the gamepad states.
+   
+   
+   Pin   (S)NES-adapter   AVR-Pin (Port 1)   AVR-Pin (Port 2)
+   1                      PC5                PD7
+   2                      PC4                PD6
+   3     Data Out         PC3                PD5
+   4     Latch            PC2                PD4
+   5     CLK              PC0                PD3
+   6                      PC1                PB2
+   7     +5V              PB1                PB3
+   8     GND              GND                GND
+   9                      PB0                PB4  */
 
    // Init PortB
    DDRB  = 0x00;
@@ -341,11 +384,16 @@ static void hardwareInit(void)
 
    // Init PortC
    DDRC  = 0x00;
-   PORTC = 0b00111111;
+   PORTC = 0b00111010;
 
    // Init PortD
    DDRD  = 0x00;
-   PORTD = 0b11111001;
+   PORTD = 0b11100001;
+
+   SETBIT(DDRB, PB1);  // Enable PB1 as an output
+   SETBIT(PORTB, PB1); // SELECT pin high from start...
+   SETBIT(DDRC, PC0);  // Enable PC0 (CLK) as an output
+   SETBIT(DDRC, PC2);  // Enable PC1 (LATCH) as an output
 
    j = 0;
    while(--j)
@@ -361,15 +409,13 @@ static void hardwareInit(void)
    TCCR2 = (1<<WGM21)|(1<<CS22)|(1<<CS21)|(1<<CS20);
    OCR2 = 196;     // for 60 hz
 
-/*
-   // Enable following if you own a JoyFi wireless transmitter/reciever -> http://store.ribit.se/
-   SETBIT(DDRB, PB1);  // Enable PB1 as an output
-   SETBIT(PORTB, PB1); // Enable PB1 / VCC
+#ifdef DUAL_JOYDIVISION
    SETBIT(DDRB, PB3);  // Enable PB3 as an output
-   SETBIT(PORTB, PB3); // Enable PB3 / VCC
-*/
+   SETBIT(PORTB, PB3); // SELECT pin high from start...
+   SETBIT(DDRD, PD3);  // Enable PD3 (CLK) as an output
+   SETBIT(DDRD, PD4);  // Enable PD4 (LATCH) as an output
+#endif
 }
-
 
 int __attribute__((noreturn)) main(void)
 {

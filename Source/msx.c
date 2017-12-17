@@ -3,7 +3,7 @@
 ->= JoyDivision - USB joystick adapter - (c) Copyright 2016-2017 OnyxSoft        =<-
 ->================================================================================<-
 ->= Version  : 0.3                                                               =<-
-->= File     : joystick.c                                                        =<-
+->= File     : msx.c                                                             =<-
 ->= Author   : Stefan Blixth (stefan@onyxsoft.se)                                =<-
 ->= Compiled : 2017-12-17                                                        =<-
 ->================================================================================<-
@@ -133,14 +133,14 @@ const char usbHidReportDescriptor[] PROGMEM =
     // Buttons
     0x05, 0x09,                    //     USAGE_PAGE (Button)
     0x19, 0x01,                    //     USAGE_MINIMUM (Button 1)
-    0x29, 0x03,                    //     USAGE_MAXIMUM (Button 3)
+    0x29, 0x02,                    //     USAGE_MAXIMUM (Button 2)
     0x15, 0x00,                    //     LOGICAL_MINIMUM (0)
     0x25, 0x01,                    //     LOGICAL_MAXIMUM (1)
-    0x95, 0x03,                    //     REPORT_COUNT (3)
+    0x95, 0x02,                    //     REPORT_COUNT (2)
     0x75, 0x01,                    //     REPORT_SIZE (1)
     0x81, 0x02,                    //     INPUT (Data,Var,Abs)
     0x95, 0x01,                    //     REPORT_COUNT (1)
-    0x75, 0x05,                    //     REPORT_SIZE (5)
+    0x75, 0x06,                    //     REPORT_SIZE (6)
     0x81, 0x03,                    //     INPUT (Constant,Var,Abs)
 
     // Axis
@@ -228,7 +228,7 @@ static uchar currState = 0;           // Keeps track on the current state
 report_t buildReport(uchar joyport)
 {
    char axis_x=0, axis_y=0;
-   uchar b1=0, b2=0, b3=0, tmp;
+   uchar b1=0, b2=0, tmp;
    report_t activeBuffer;
    
 #ifdef DUAL_JOYDIVISION
@@ -250,12 +250,11 @@ report_t buildReport(uchar joyport)
 
       // Read the status of the buttons...
       if (tmp & (1<<PC1)) {b1 = 1;} // Button 1
-      if (tmp & (1<<PC0)) {b3 = 1;} // Button 3
 
       currState = PINB;
       tmp = currState^0xff;
 
-      if (tmp & (1<<PB0)) {b2 = 1;} // Button 2
+      if (tmp & (1<<PB1)) {b2 = 1;} // Button 2
    }
    else // joyport == JOYPORT2
    {
@@ -269,13 +268,11 @@ report_t buildReport(uchar joyport)
       if (tmp & (1<<PD7)) {axis_y = 0x81;} // Up
 
       // Read the status of the buttons...
-      if (tmp & (1<<PD3)) {b3 = 1;} // Button 3
-
       currState = PINB;
       tmp = currState^0xff;
 
       if (tmp & (1<<PB2)) {b1 = 1;} // Button 1
-      if (tmp & (1<<PB4)) {b2 = 1;} // Button 2
+      if (tmp & (1<<PB3)) {b2 = 1;} // Button 2
 
    }
    activeBuffer.axis_x  = axis_x;
@@ -283,7 +280,6 @@ report_t buildReport(uchar joyport)
    
    if (b1) activeBuffer.buttons |= 0x01;
    if (b2) activeBuffer.buttons |= 0x02;
-   if (b3) activeBuffer.buttons |= 0x04;
 
    return activeBuffer;
 }
@@ -324,20 +320,20 @@ static void hardwareInit(void)
               \ o o o o /
             6  ¯¯¯¯¯¯¯¯¯ 9
 
-   Pin   Joystick     AVR-Pin (Port 1)   AVR-Pin (Port 2)
-   1     Up           PC5                PD7
-   2     Down         PC4                PD6
-   3     Left         PC3                PD5
-   4     Right        PC2                PD4
-   5     n/c          PC0                PD3
-   6     Button1      PC1                PB2
-   7     +5V          PB1                PB3
-   8     GND          GND                GND
-   9     Button2      PB0                PB4  */
+   Pin   Joystick (MSX)    AVR-Pin (Port 1)   AVR-Pin (Port 2)
+   1     Up                PC5                PD7
+   2     Down              PC4                PD6
+   3     Left              PC3                PD5
+   4     Right             PC2                PD4
+   5     n/c               PC0                PD3
+   6     Button1           PC1                PB2
+   7     Button2           PB1                PB3
+   8     GND               GND                GND
+   9     n/c               PB0                PB4  */
 
    // Init PortB
    DDRB  = 0x00;
-   PORTB = 0b00110101;
+   PORTB = 0b00111111;
 
    // Init PortC
    DDRC  = 0x00;
@@ -360,14 +356,6 @@ static void hardwareInit(void)
 
    TCCR2 = (1<<WGM21)|(1<<CS22)|(1<<CS21)|(1<<CS20);
    OCR2 = 196;     // for 60 hz
-
-/*
-   // Enable following if you own a JoyFi wireless transmitter/reciever -> http://store.ribit.se/
-   SETBIT(DDRB, PB1);  // Enable PB1 as an output
-   SETBIT(PORTB, PB1); // Enable PB1 / VCC
-   SETBIT(DDRB, PB3);  // Enable PB3 as an output
-   SETBIT(PORTB, PB3); // Enable PB3 / VCC
-*/
 }
 
 

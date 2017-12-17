@@ -5,7 +5,7 @@
 ->= Version  : 0.3                                                               =<-
 ->= File     : cd32.c                                                            =<-
 ->= Author   : Stefan Blixth (stefan@onyxsoft.se)                                =<-
-->= Compiled : 2017-04-17                                                        =<-
+->= Compiled : 2017-12-17                                                        =<-
 ->================================================================================<-
 ->=                                                                              =<-
 ->= This file is part of JoyDivision - USB joystick adapter                      =<-
