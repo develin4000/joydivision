@@ -12,6 +12,7 @@ FUSE_L   = 0xff
 FUSE_H   = 0xc9
 AVRDUDE  = avrdude -c usbasp -p $(DEVICE) # edit this line for your programmer
 
+#CFLAGS   = -Iusbdrv -I. -DDEBUG_LEVEL=0 -DTHEC64
 CFLAGS   = -Iusbdrv -I. -DDEBUG_LEVEL=0
 OBJECTS  = usbdrv/usbdrv.o usbdrv/usbdrvasm.o usbdrv/oddebug.o
 JOY_OBJ  = $(OBJECTS) joystick.o

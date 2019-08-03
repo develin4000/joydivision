@@ -219,7 +219,12 @@ section at the end of this file).
 
 /* -------------------------- Device Description --------------------------- */
 
-#define  USB_CFG_VENDOR_ID       0xc0, 0x16 /* = 0x16c0 = 5824 = voti.nl */
+#ifdef THEC64
+ #define  USB_CFG_VENDOR_ID       0xba, 0x22                                    // THEC64 Fake ID
+#else
+ #define  USB_CFG_VENDOR_ID       0xc0, 0x16 /* = 0x16c0 = 5824 = voti.nl */    // Normal ID
+#endif
+
 /* USB vendor ID for the device, low byte first. If you have registered your
  * own Vendor ID, define it here. Otherwise you may use one of obdev's free
  * shared VID/PID pairs. Be sure to read USB-IDs-for-free.txt for rules!
@@ -228,8 +233,15 @@ section at the end of this file).
  * with libusb: 0x16c0/0x5dc.  Use this VID/PID pair ONLY if you understand
  * the implications!
  */
-//#define  USB_CFG_DEVICE_ID       0xe8, 0x03 /* VOTI's lab use PID */
-#define  USB_CFG_DEVICE_ID       0xdc, 0x27 /* Joystick */
+////#define  USB_CFG_DEVICE_ID       0xe8, 0x03 /* VOTI's lab use PID */
+
+#ifdef THEC64
+ #define  USB_CFG_DEVICE_ID       0x20, 0x10 /* Joystick */   // THEC64 Fake ID
+#else
+ #define  USB_CFG_DEVICE_ID       0xdc, 0x27 /* Joystick */   // Normal ID
+#endif
+
+
 /* This is the ID of the product, low byte first. It is interpreted in the
  * scope of the vendor ID. If you have registered your own VID with usb.org
  * or if you have licensed a PID from somebody else, define it here. Otherwise
@@ -240,7 +252,11 @@ section at the end of this file).
  * with libusb: 0x16c0/0x5dc.  Use this VID/PID pair ONLY if you understand
  * the implications!
  */
-#define USB_CFG_DEVICE_VERSION  0x00, 0x01
+#ifdef THEC64
+ #define USB_CFG_DEVICE_VERSION  0x06, 0x01
+#else
+ #define USB_CFG_DEVICE_VERSION  0x00, 0x01
+#endif
 /* Version number of the device: Minor number first, then major number.
  */
 
@@ -250,10 +266,8 @@ section at the end of this file).
 #undef USB_CFG_VENDOR_NAME_LEN
 
 #else
-
-#define USB_CFG_VENDOR_NAME     'O', 'n', 'y', 'x', 'S', 'o', 'f', 't'
-#define USB_CFG_VENDOR_NAME_LEN 8
-
+ #define USB_CFG_VENDOR_NAME     'O', 'n', 'y', 'x', 'S', 'o', 'f', 't'
+ #define USB_CFG_VENDOR_NAME_LEN 8
 #endif
 
 /* These two values define the vendor name returned by the USB device. The name
@@ -265,26 +279,19 @@ section at the end of this file).
  * details.
  */
 #ifdef DUAL_JOYDIVISION
-
-#undef USB_CFG_DEVICE_NAME
-#undef USB_CFG_DEVICE_NAME_LEN
-//#define USB_CFG_DEVICE_NAME     'D','u','a','l',' ','J', 'o', 'y', 'D', 'i', 'v', 'i', 's', 'i', 'o', 'n'
-//#define USB_CFG_DEVICE_NAME_LEN 16
-
+ #undef USB_CFG_DEVICE_NAME
+ #undef USB_CFG_DEVICE_NAME_LEN
 #else
-
-//#undef USB_CFG_DEVICE_NAME
-//#undef USB_CFG_DEVICE_NAME_LEN
-#define USB_CFG_DEVICE_NAME     'J', 'o', 'y', 'D', 'i', 'v', 'i', 's', 'i', 'o', 'n'
-#define USB_CFG_DEVICE_NAME_LEN 11
-
+ #define USB_CFG_DEVICE_NAME     'J','o','y','D','i','v','i','s','i','o','n'
+ #define USB_CFG_DEVICE_NAME_LEN 11
 #endif
 /* Same as above for the device name. If you don't want a device name, undefine
  * the macros. See the file USB-IDs-for-free.txt before you assign a name if
  * you use a shared VID/PID.
  */
 /*#define USB_CFG_SERIAL_NUMBER   'N', 'o', 'n', 'e' */
-/*#define USB_CFG_SERIAL_NUMBER_LEN   0 */
+#define USB_CFG_SERIAL_NUMBER       0
+#define USB_CFG_SERIAL_NUMBER_LEN   0
 /* Same as above for the serial number. If you don't want a serial number,
  * undefine the macros.
  * It may be useful to provide the serial number through other means than at
@@ -305,11 +312,12 @@ section at the end of this file).
  * HID class is 3, no subclass and protocol required (but may be useful!)
  * CDC class is 2, use subclass 2 and protocol 1 for ACM
  */
-//#ifdef DUAL_JOYDIVISION
-//#define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    104
-//#else
-#define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    50
-//#endif
+
+#ifdef THEC64
+ #define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    42
+#else
+ #define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    48
+#endif
 /* Define this to the length of the HID report descriptor, if you implement
  * an HID device. Otherwise don't define it or define it to 0.
  * If you use this define, you must add a PROGMEM character array named
