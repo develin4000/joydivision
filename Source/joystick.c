@@ -1,11 +1,11 @@
 /*
 ->================================================================================<-
-->= JoyDivision - USB joystick adapter - (c) Copyright 2016-2018 OnyxSoft        =<-
+->= JoyDivision - USB joystick adapter - (c) Copyright 2016-2019 OnyxSoft        =<-
 ->================================================================================<-
 ->= Version  : 0.4                                                               =<-
 ->= File     : joystick.c                                                        =<-
 ->= Author   : Stefan Blixth (stefan@onyxsoft.se)                                =<-
-->= Compiled : 2018-11-01                                                        =<-
+->= Compiled : 2019-08-15                                                        =<-
 ->================================================================================<-
 ->=                                                                              =<-
 ->= This file is part of JoyDivision - USB joystick adapter                      =<-
@@ -133,13 +133,8 @@ const char usbHidReportDescriptor[] PROGMEM =
          0x05, 0x01,               //     USAGE_PAGE (Generic Desktop)
          0x09, 0x30,               //     USAGE (X)
          0x09, 0x31,               //     USAGE (Y)
-#ifdef THEC64
-         0x15, 0x00,               //     LOGICAL_MINIMUM (0)
-         0x25, 0xff,               //     LOGICAL_MAXIMUM (255)
-#else
          0x15, 0x81,               //     LOGICAL_MINIMUM (-127)
          0x25, 0x7f,               //     LOGICAL_MAXIMUM (127)
-#endif
          0x75, 0x08,               //     REPORT_SIZE (8)
          0x95, 0x02,               //     REPORT_COUNT (2)
          0x81, 0x02,               //     INPUT (Data,Var,Abs)
@@ -183,10 +178,8 @@ typedef struct
 
 #ifdef DUAL_JOYDIVISION
 static report_t reportBuffer[2];
-
  static PROGMEM const char DeviceStr[] = "Dual JoyDivision #x";
  static PROGMEM const char VendorStr[] = "OnyxSoft";
-
 static const char Desc0Str[] = { 4, 3, 0x09, 0x04 };
 
 usbMsgLen_t usbFunctionDescriptor(struct usbRequest *rq)
@@ -244,11 +237,7 @@ static uchar currState = 0;           // Keeps track on the current state
 
 report_t buildReport(uchar joyport)
 {
-#ifdef THEC64
-   char axis_x=0x7f, axis_y=0x7f;
-#else
    char axis_x=0, axis_y=0;
-#endif
    uchar b1=0, b2=0, b3=0, tmp;
    report_t activeBuffer;
    
@@ -264,17 +253,11 @@ report_t buildReport(uchar joyport)
       tmp = currState^0xff;
 
       // Read the status of the axis...
-#ifdef THEC64
-      if (tmp & (1<<PC2)) {axis_x = 0xff;} // Right
-      if (tmp & (1<<PC3)) {axis_x = 0x00;} // Left
-      if (tmp & (1<<PC4)) {axis_y = 0xff;} // Down
-      if (tmp & (1<<PC5)) {axis_y = 0x00;} // Up
-#else
       if (tmp & (1<<PC2)) {axis_x = 0x7f;} // Right
       if (tmp & (1<<PC3)) {axis_x = 0x81;} // Left
       if (tmp & (1<<PC4)) {axis_y = 0x7f;} // Down
       if (tmp & (1<<PC5)) {axis_y = 0x81;} // Up
-#endif
+
       // Read the status of the buttons...
       if (tmp & (1<<PC1)) {b1 = 1;} // Button 1
       if (tmp & (1<<PC0)) {b3 = 1;} // Button 3
@@ -290,17 +273,11 @@ report_t buildReport(uchar joyport)
       tmp = currState^0xff;
 
       // Read the status of the axis...
-#ifdef THEC64
-      if (tmp & (1<<PD4)) {axis_x = 0xff;} // Right
-      if (tmp & (1<<PD5)) {axis_x = 0x00;} // Left
-      if (tmp & (1<<PD6)) {axis_y = 0xff;} // Down
-      if (tmp & (1<<PD7)) {axis_y = 0x00;} // Up
-#else
       if (tmp & (1<<PD4)) {axis_x = 0x7f;} // Right
       if (tmp & (1<<PD5)) {axis_x = 0x81;} // Left
       if (tmp & (1<<PD6)) {axis_y = 0x7f;} // Down
       if (tmp & (1<<PD7)) {axis_y = 0x81;} // Up
-#endif
+
       // Read the status of the buttons...
       if (tmp & (1<<PD3)) {b3 = 1;} // Button 3
 
@@ -313,8 +290,12 @@ report_t buildReport(uchar joyport)
    }
    activeBuffer.axis_x  = axis_x;
    activeBuffer.axis_y  = axis_y;
-   
+
+#ifdef THEC64
+   if (b1) activeBuffer.buttons |= 0x41;
+#else
    if (b1) activeBuffer.buttons |= 0x01;
+#endif
    if (b2) activeBuffer.buttons |= 0x02;
    if (b3) activeBuffer.buttons |= 0x04;
 
