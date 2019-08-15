@@ -1,6 +1,6 @@
 /*
 ->================================================================================<-
-->= JoyDivision - USB joystick adapter - (c) Copyright 2016-2017 OnyxSoft        =<-
+->= JoyDivision - USB joystick adapter - (c) Copyright 2016-2019 OnyxSoft        =<-
 ->================================================================================<-
 ->= Version  : 0.4                                                               =<-
 ->= File     : msx.c                                                             =<-
