@@ -162,7 +162,7 @@ flashsega: sega.hex
 flashnes: nes.hex
 	$(AVRDUDE) -U flash:w:nes.hex:i
 
-flashnes: snes.hex
+flashsnes: snes.hex
 	$(AVRDUDE) -U flash:w:snes.hex:i
 
 flashmsx: msx.hex

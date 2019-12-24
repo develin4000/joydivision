@@ -5,7 +5,7 @@
 ->= Version  : 0.4                                                               =<-
 ->= File     : joystick.c                                                        =<-
 ->= Author   : Stefan Blixth (stefan@onyxsoft.se)                                =<-
-->= Compiled : 2019-08-15                                                        =<-
+->= Compiled : 2019-12-24                                                        =<-
 ->================================================================================<-
 ->=                                                                              =<-
 ->= This file is part of JoyDivision - USB joystick adapter                      =<-
@@ -129,6 +129,28 @@ const char usbHidReportDescriptor[] PROGMEM =
     0xa1, 0x01,                    // COLLECTION (Application)
       0xa1, 0x02,                  //   COLLECTION (Physical)
 
+#ifdef THEC64
+         // Axis
+         0x05, 0x01,               //     USAGE_PAGE (Generic Desktop)
+         0x09, 0x30,               //     USAGE (X)
+         0x09, 0x31,               //     USAGE (Y)
+         0x15, 0x00,               //     LOGICAL_MINIMUM (0)
+         0x25, 0xff,               //     LOGICAL_MAXIMUM (255)
+         0x75, 0x08,               //     REPORT_SIZE (8)
+         0x95, 0x02,               //     REPORT_COUNT (2)
+         0x81, 0x02,               //     INPUT (Data,Var,Abs)
+
+         // Buttons
+         0x05, 0x09,               //     USAGE_PAGE (Button)
+
+         0x19, 0x01,               //     USAGE_MINIMUM (Button 1)
+         0x29, 0x08,               //     USAGE_MAXIMUM (Button 8)
+         0x15, 0x00,               //     LOGICAL_MINIMUM (0)
+         0x25, 0x01,               //     LOGICAL_MAXIMUM (1)
+         0x95, 0x08,               //     REPORT_COUNT (8)
+         0x75, 0x01,               //     REPORT_SIZE (1)
+         0x81, 0x02,               //     INPUT (Data,Var,Abs)
+#else
          // Axis
          0x05, 0x01,               //     USAGE_PAGE (Generic Desktop)
          0x09, 0x30,               //     USAGE (X)
@@ -141,15 +163,7 @@ const char usbHidReportDescriptor[] PROGMEM =
 
          // Buttons
          0x05, 0x09,               //     USAGE_PAGE (Button)
-#ifdef THEC64
-         0x19, 0x01,               //     USAGE_MINIMUM (Button 1)
-         0x29, 0x08,               //     USAGE_MAXIMUM (Button 8)
-         0x15, 0x00,               //     LOGICAL_MINIMUM (0)
-         0x25, 0x01,               //     LOGICAL_MAXIMUM (1)
-         0x95, 0x08,               //     REPORT_COUNT (8)
-         0x75, 0x01,               //     REPORT_SIZE (1)
-         0x81, 0x02,               //     INPUT (Data,Var,Abs)
-#else
+
          0x19, 0x01,               //     USAGE_MINIMUM (Button 1)
          0x29, 0x03,               //     USAGE_MAXIMUM (Button 3)
          0x15, 0x00,               //     LOGICAL_MINIMUM (0)
@@ -170,8 +184,13 @@ const char usbHidReportDescriptor[] PROGMEM =
 
 typedef struct
 {
+#ifdef THEC64
+   uchar axis_x;
+   uchar axis_y;
+#else
    char axis_x;
    char axis_y;
+#endif
    uchar buttons;
 }report_t;
 
@@ -237,7 +256,13 @@ static uchar currState = 0;           // Keeps track on the current state
 
 report_t buildReport(uchar joyport)
 {
+#ifdef THEC64
+   uchar axis_x=0x7f, axis_y=0x7f;
+   char thec64 = 1;
+#else
    char axis_x=0, axis_y=0;
+   char thec64 = 0;
+#endif
    uchar b1=0, b2=0, b3=0, tmp;
    report_t activeBuffer;
    
@@ -253,10 +278,10 @@ report_t buildReport(uchar joyport)
       tmp = currState^0xff;
 
       // Read the status of the axis...
-      if (tmp & (1<<PC2)) {axis_x = 0x7f;} // Right
-      if (tmp & (1<<PC3)) {axis_x = 0x81;} // Left
-      if (tmp & (1<<PC4)) {axis_y = 0x7f;} // Down
-      if (tmp & (1<<PC5)) {axis_y = 0x81;} // Up
+      if (tmp & (1<<PC2)) {axis_x = (thec64) ? 0xff : 0x7f;} // Right
+      if (tmp & (1<<PC3)) {axis_x = (thec64) ? 0x00 : 0x81;} // Left
+      if (tmp & (1<<PC4)) {axis_y = (thec64) ? 0xff : 0x7f;} // Down
+      if (tmp & (1<<PC5)) {axis_y = (thec64) ? 0x00 : 0x81;} // Up
 
       // Read the status of the buttons...
       if (tmp & (1<<PC1)) {b1 = 1;} // Button 1
@@ -273,10 +298,10 @@ report_t buildReport(uchar joyport)
       tmp = currState^0xff;
 
       // Read the status of the axis...
-      if (tmp & (1<<PD4)) {axis_x = 0x7f;} // Right
-      if (tmp & (1<<PD5)) {axis_x = 0x81;} // Left
-      if (tmp & (1<<PD6)) {axis_y = 0x7f;} // Down
-      if (tmp & (1<<PD7)) {axis_y = 0x81;} // Up
+      if (tmp & (1<<PD4)) {axis_x = (thec64) ? 0xff : 0x7f;} // Right
+      if (tmp & (1<<PD5)) {axis_x = (thec64) ? 0x00 : 0x81;} // Left
+      if (tmp & (1<<PD6)) {axis_y = (thec64) ? 0xff : 0x7f;} // Down
+      if (tmp & (1<<PD7)) {axis_y = (thec64) ? 0x00 : 0x81;} // Up
 
       // Read the status of the buttons...
       if (tmp & (1<<PD3)) {b3 = 1;} // Button 3
