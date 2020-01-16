@@ -43,7 +43,8 @@ AVRDUDE = avrdude -c stk500v2 -P avrdoper -p $(DEVICE)
 LDFLAGS += -Wl,--relax,--gc-sections -Wl,--section-start=.text=$(BOOTLOADER_ADDRESS)
 
 # Omit -fno-* options when using gcc 3, it does not support them.
-COMPILE = avr-gcc -Wall -Os -fno-move-loop-invariants -fno-tree-scev-cprop -fno-inline-small-functions -Iusbdrv -I. -mmcu=$(DEVICE) -DF_CPU=$(F_CPU) -DDEBUG_LEVEL=0 # -DTEST_MODE
+# use -EDUARANA for support for Edu Aranas joystick adapater
+COMPILE = avr-gcc -Wall -Os -fno-move-loop-invariants -fno-tree-scev-cprop -fno-inline-small-functions -Iusbdrv -I. -mmcu=$(DEVICE) -DF_CPU=$(F_CPU) -DDEBUG_LEVEL=0 
 # NEVER compile the final product with debugging! Any debug output will
 # distort timing so that the specs can't be met.
 

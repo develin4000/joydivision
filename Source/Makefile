@@ -12,7 +12,9 @@ FUSE_L   = 0xff
 FUSE_H   = 0xc9
 AVRDUDE  = avrdude -c usbasp -p $(DEVICE) # edit this line for your programmer
 
-#CFLAGS   = -Iusbdrv -I. -DDEBUG_LEVEL=0 -DTHEC64
+#CFLAGS options : -DEDUARANA = Use this flag to build a firmware compatible with Edu Aranas joystick adapter - 
+#CFLAGS options : -DTHEC64 = Using this if you would like to make the HID device compatible with the THEC64 emulator/computer
+
 CFLAGS   = -Iusbdrv -I. -DDEBUG_LEVEL=0
 OBJECTS  = usbdrv/usbdrv.o usbdrv/usbdrvasm.o usbdrv/oddebug.o
 JOY_OBJ  = $(OBJECTS) joystick.o
