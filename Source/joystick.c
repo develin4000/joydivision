@@ -2,10 +2,10 @@
 ->================================================================================<-
 ->= JoyDivision - USB joystick adapter - (c) Copyright 2016-2020 OnyxSoft        =<-
 ->================================================================================<-
-->= Version  : 0.5                                                               =<-
+->= Version  : 0.6                                                               =<-
 ->= File     : joystick.c                                                        =<-
 ->= Author   : Stefan Blixth (stefan@onyxsoft.se)                                =<-
-->= Compiled : 2020-01-17                                                        =<-
+->= Compiled : 2020-10-06                                                        =<-
 ->================================================================================<-
 ->=                                                                              =<-
 ->= This file is part of JoyDivision - USB joystick adapter                      =<-
@@ -350,7 +350,7 @@ report_t buildReport(uchar joyport)
    }
    activeBuffer.axis_x  = axis_x;
 #ifdef THEC64
-   activeBuffer.axis_y  = activeBuffer.y2 = activeBuffer.y3 = activeBuffer.y4 = axis_y; 
+   activeBuffer.axis_y  = axis_y; 
 #else
    activeBuffer.axis_y  = axis_y;
 #endif
