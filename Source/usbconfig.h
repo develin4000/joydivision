@@ -226,6 +226,8 @@ section at the end of this file).
 
 #ifdef THEC64
  #define  USB_CFG_VENDOR_ID       0xba, 0x22                                    // THEC64 Fake ID
+#elif THEA500
+ #define  USB_CFG_VENDOR_ID       0xba, 0x22                                    // THEA500 Fake ID
 #else
  #define  USB_CFG_VENDOR_ID       0xc0, 0x16 /* = 0x16c0 = 5824 = voti.nl */    // Normal ID
 #endif
@@ -242,6 +244,8 @@ section at the end of this file).
 
 #ifdef THEC64
  #define  USB_CFG_DEVICE_ID       0x20, 0x10 /* Joystick */   // THEC64 Fake ID
+#elif THEA500
+ #define  USB_CFG_DEVICE_ID       0x20, 0x10 /* Joystick */   // THEA500 Fake ID
 #else
  #define  USB_CFG_DEVICE_ID       0xdc, 0x27 /* Joystick */   // Normal ID
 #endif
@@ -258,6 +262,8 @@ section at the end of this file).
  * the implications!
  */
 #ifdef THEC64
+ #define USB_CFG_DEVICE_VERSION  0x06, 0x01
+#elif THEA500
  #define USB_CFG_DEVICE_VERSION  0x06, 0x01
 #else
  #define USB_CFG_DEVICE_VERSION  0x00, 0x01
@@ -319,7 +325,9 @@ section at the end of this file).
  */
 
 #ifdef THEC64
- #define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    54  // 42
+ #define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    54  // 42 //43
+#elif THEA500
+ #define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    54  // 42 //43
 #else
  #define USB_CFG_HID_REPORT_DESCRIPTOR_LENGTH    48
 #endif

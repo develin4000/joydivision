@@ -1,11 +1,11 @@
 /*
 ->================================================================================<-
-->= JoyDivision - USB joystick adapter - (c) Copyright 2016-2020 OnyxSoft        =<-
+->= JoyDivision - USB joystick adapter - (c) Copyright 2016-2022 OnyxSoft        =<-
 ->================================================================================<-
-->= Version  : 0.6                                                               =<-
+->= Version  : 0.7                                                               =<-
 ->= File     : joystick.c                                                        =<-
 ->= Author   : Stefan Blixth (stefan@onyxsoft.se)                                =<-
-->= Compiled : 2020-10-06                                                        =<-
+->= Compiled : 2022-04-16                                                        =<-
 ->================================================================================<-
 ->=                                                                              =<-
 ->= This file is part of JoyDivision - USB joystick adapter                      =<-
@@ -138,27 +138,54 @@ const char usbHidReportDescriptor[] PROGMEM =
          0x05, 0x01,               //     USAGE_PAGE (Generic Desktop)
          0x09, 0x30,               //     USAGE (X)
          0x09, 0x31,               //     USAGE (Y)
-         0x09, 0x31,               //     USAGE (Y)
-         0x09, 0x31,               //     USAGE (Y)
-         0x09, 0x31,               //     USAGE (Y)
-         0x15, 0x00,               //     LOGICAL_MINIMUM (0)
-         0x26, 0xff, 0x00,         //     LOGICAL_MAXIMUM (255)
-		 0x35, 0x00,               //     PHYSICAL_MINIMUM (0)
-		 0x46, 0xff, 0x00,         //     PHYSICAL_MAXIMUM (255)
+         0x15, 0x00,               //     LOGICAL_MINIMUM (-127)
+         0x26, 0xff, 0x00,         //     LOGICAL_MAXIMUM (127)
+         0x35, 0x00,               //     PHYSICAL_MINIMUM (0)
+         0x46, 0xff, 0x00,         //     PHYSICAL_MAXIMUM (255)
          0x75, 0x08,               //     REPORT_SIZE (8)
-         0x95, 0x05,               //     REPORT_COUNT (5)
+         0x95, 0x02,               //     REPORT_COUNT (2)
          0x81, 0x02,               //     INPUT (Data,Var,Abs)
 
          // Buttons
          0x05, 0x09,               //     USAGE_PAGE (Button)
 
          0x19, 0x01,               //     USAGE_MINIMUM (Button 1)
-         0x29, 0x08,               //     USAGE_MAXIMUM (Button 8)
+         0x29, 0x03,               //     USAGE_MAXIMUM (Button 3)
          0x15, 0x00,               //     LOGICAL_MINIMUM (0)
          0x25, 0x01,               //     LOGICAL_MAXIMUM (1)
-         0x95, 0x08,               //     REPORT_COUNT (8)
+         0x95, 0x07,               //     REPORT_COUNT (7)
          0x75, 0x01,               //     REPORT_SIZE (1)
          0x81, 0x02,               //     INPUT (Data,Var,Abs)
+         0x95, 0x01,               //     REPORT_COUNT (1)
+         0x75, 0x01,               //     REPORT_SIZE (1)
+         0x81, 0x03,               //     INPUT (Constant,Var,Abs)
+
+#elif THEA500
+         // Axis
+         0x05, 0x01,               //     USAGE_PAGE (Generic Desktop)
+         0x09, 0x30,               //     USAGE (X)
+         0x09, 0x31,               //     USAGE (Y)
+         0x15, 0x00,               //     LOGICAL_MINIMUM (-127)
+         0x26, 0xff, 0x00,         //     LOGICAL_MAXIMUM (127)
+         0x35, 0x00,               //     PHYSICAL_MINIMUM (0)
+         0x46, 0xff, 0x00,         //     PHYSICAL_MAXIMUM (255)
+         0x75, 0x08,               //     REPORT_SIZE (8)
+         0x95, 0x02,               //     REPORT_COUNT (2)
+         0x81, 0x02,               //     INPUT (Data,Var,Abs)
+
+         // Buttons
+         0x05, 0x09,               //     USAGE_PAGE (Button)
+
+         0x19, 0x01,               //     USAGE_MINIMUM (Button 1)
+         0x29, 0x03,               //     USAGE_MAXIMUM (Button 3)
+         0x15, 0x00,               //     LOGICAL_MINIMUM (0)
+         0x25, 0x01,               //     LOGICAL_MAXIMUM (1)
+         0x95, 0x03,               //     REPORT_COUNT (3)
+         0x75, 0x01,               //     REPORT_SIZE (1)
+         0x81, 0x02,               //     INPUT (Data,Var,Abs)
+         0x95, 0x01,               //     REPORT_COUNT (1)
+         0x75, 0x05,               //     REPORT_SIZE (5)
+         0x81, 0x03,               //     INPUT (Constant,Var,Abs)
 #else
          // Axis
          0x05, 0x01,               //     USAGE_PAGE (Generic Desktop)
@@ -178,7 +205,6 @@ const char usbHidReportDescriptor[] PROGMEM =
          0x15, 0x00,               //     LOGICAL_MINIMUM (0)
          0x25, 0x01,               //     LOGICAL_MAXIMUM (1)
          0x95, 0x03,               //     REPORT_COUNT (3)
-
          0x75, 0x01,               //     REPORT_SIZE (1)
          0x81, 0x02,               //     INPUT (Data,Var,Abs)
          0x95, 0x01,               //     REPORT_COUNT (1)
@@ -196,9 +222,9 @@ typedef struct
 #ifdef THEC64
    uchar axis_x;
    uchar axis_y;
-   uchar y2;		// Filler...
-   uchar y3;        // Filler...
-   uchar y4;        // Filler...
+#elif THEA500
+   uchar axis_x;
+   uchar axis_y;
 #else
    char axis_x;
    char axis_y;
@@ -265,16 +291,20 @@ static report_t reportBuffer;
 static uchar idleRate = 0;            // repeat rate for keyboards, never used for mice
 static uchar currState = 0;           // Keeps track on the current state
 
-
 report_t buildReport(uchar joyport)
 {
 #ifdef THEC64
    unsigned char axis_x=0x7f, axis_y=0x7f;
-   //char axis_x=0x80, axis_y=0x80;
    char thec64 = 1;
+   char thea500 = 0;
+#elif THEA500
+   unsigned char axis_x=0x7f, axis_y=0x7f;
+   char thec64 = 0;
+   char thea500 = 1;
 #else
    char axis_x=0, axis_y=0;
    char thec64 = 0;
+   char thea500 = 0;
 #endif
    uchar b1=0, b2=0, b3=0, tmp;
    report_t activeBuffer;
@@ -293,29 +323,28 @@ report_t buildReport(uchar joyport)
       tmp = currState^0xff;
 
       // Read the status of the axis...
-      if (tmp & (1<<PD1)) {axis_x = (thec64) ? 0xff : 0x7f;} // Right
-      if (tmp & (1<<PD3)) {axis_x = (thec64) ? 0x00 : 0x81;} // Left
-      if (tmp & (1<<PD0)) {axis_y = (thec64) ? 0x00 : 0x81;} // Up
+      if (tmp & (1<<PD1)) {axis_x = (thec64 || thea500) ? 0xff : 0x7f;} // Right
+      if (tmp & (1<<PD3)) {axis_x = (thec64 || thea500) ? 0x00 : 0x81;} // Left
+      if (tmp & (1<<PD0)) {axis_y = (thec64 || thea500) ? 0x00 : 0x81;} // Up
 
       // Read the status of the buttons...
       if (tmp & (1<<PD4)) {b1 = 1;} // Button 1
-      if (tmp & (1<<PD5)) {b2 = 1;} // Button 3
+      if (tmp & (1<<PD5)) {b2 = 1;} // Button 2
 
       currState = PINB;
       tmp = currState^0xff;
 
-      if (tmp & (1<<PB2)) {axis_y = (thec64) ? 0xff : 0x7f;} // Down
+      if (tmp & (1<<PB2)) {axis_y = (thec64 || thea500) ? 0xff : 0x7f;} // Down
 
-      //if (tmp & (1<<PB0)) {b2 = 1;} // Button 2
 #else
       currState = PINC;
       tmp = currState^0xff;
 
       // Read the status of the axis...
-      if (tmp & (1<<PC2)) {axis_x = (thec64) ? 0xff : 0x7f;} // Right
-      if (tmp & (1<<PC3)) {axis_x = (thec64) ? 0x00 : 0x81;} // Left
-      if (tmp & (1<<PC4)) {axis_y = (thec64) ? 0xff : 0x7f;} // Down 
-      if (tmp & (1<<PC5)) {axis_y = (thec64) ? 0x00 : 0x81;} // Up 
+      if (tmp & (1<<PC2)) {axis_x = (thec64 || thea500) ? 0xff : 0x7f;} // Right
+      if (tmp & (1<<PC3)) {axis_x = (thec64 || thea500) ? 0x00 : 0x81;} // Left
+      if (tmp & (1<<PC4)) {axis_y = (thec64 || thea500) ? 0xff : 0x7f;} // Down 
+      if (tmp & (1<<PC5)) {axis_y = (thec64 || thea500) ? 0x00 : 0x81;} // Up 
 
       // Read the status of the buttons...
       if (tmp & (1<<PC1)) {b1 = 1;} // Button 1
@@ -333,10 +362,10 @@ report_t buildReport(uchar joyport)
       tmp = currState^0xff;
 
       // Read the status of the axis...
-      if (tmp & (1<<PD4)) {axis_x = (thec64) ? 0xff : 0x7f;} // Right
-      if (tmp & (1<<PD5)) {axis_x = (thec64) ? 0x00 : 0x81;} // Left
-      if (tmp & (1<<PD6)) {axis_y = (thec64) ? 0xff : 0x7f;} // Down
-      if (tmp & (1<<PD7)) {axis_y = (thec64) ? 0x00 : 0x81;} // Up
+      if (tmp & (1<<PD4)) {axis_x = (thec64 || thea500) ? 0xff : 0x7f;} // Right
+      if (tmp & (1<<PD5)) {axis_x = (thec64 || thea500) ? 0x00 : 0x81;} // Left
+      if (tmp & (1<<PD6)) {axis_y = (thec64 || thea500) ? 0xff : 0x7f;} // Down
+      if (tmp & (1<<PD7)) {axis_y = (thec64 || thea500) ? 0x00 : 0x81;} // Up
 
       // Read the status of the buttons...
       if (tmp & (1<<PD3)) {b3 = 1;} // Button 3
@@ -349,13 +378,9 @@ report_t buildReport(uchar joyport)
 
    }
    activeBuffer.axis_x  = axis_x;
-#ifdef THEC64
-   activeBuffer.axis_y  = axis_y; 
-#else
    activeBuffer.axis_y  = axis_y;
-#endif
 
-   if (b1) activeBuffer.buttons |= (thec64) ? 0x41 : 0x01;
+   if (b1) activeBuffer.buttons |= (thec64) ? 0x41 : ((thea500) ? 0x04 : 0x01);
    if (b2) activeBuffer.buttons |= 0x02;
    if (b3) activeBuffer.buttons |= 0x04;
 
